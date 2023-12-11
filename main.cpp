@@ -26,6 +26,7 @@ void initCache();
 
 int main()
 {
+    system("clear");
     bool CC = false;
     cout << "Please enter the following inputs: " << endl;
     cout << "L: ";
@@ -48,7 +49,7 @@ int main()
         }
     }
 
-    C = (double)L / (double)S;
+    C = (double)S / (double)L;
 
     cache.resize(C);
 
@@ -102,6 +103,10 @@ bool readFromFile(string filename)
     string line;
     while (getline(inputFile, line, ','))
     {
+        cout << "\n\n\n\n\n\n";
+        cout << "=================================================================" << endl;
+        cout << "=============================New Access==========================" << endl;
+        cout << "=================================================================" << endl;
         cacheAccess(line);
     }
 
@@ -122,21 +127,38 @@ void initCache()
 void cacheAccess(string address)
 {
     string binAddress = hexToBin(address);
-    string indexTemp;
+
+    while (binAddress.length() < 24)
+    {
+        binAddress = "0" + binAddress;
+    }
+
+    cout << "Address in Hexadecimal: " << address << endl;
 
     displacement = log2(L);
     indexBits = log2(C);
 
+    cout << "Address in Binary: " << binAddress << endl;
+
     tag = 24 - indexBits - displacement;
 
-    string index, tag;
+    string indexTemp, tagTemp, dTemp;
+    tagTemp = binAddress.substr(0, tag);
+    indexTemp = binAddress.substr(tag, indexBits);
+    dTemp = binAddress.substr(tag + indexBits, displacement);
+
+    cout << "Displacement binary: " << dTemp << endl;
+    cout << "Index binary: " << indexTemp << endl;
+
+    int index = stoi(indexTemp, nullptr, 2);
+
 
     // Check if tag is in cache
-    if (!cache[indexBits].first | cache[indexBits].second != tag)
+    if (!cache[index].first | cache[index].second != tagTemp)
     {
         miss++;
-        cache[indexBits].first = true;
-        cache[indexBits].second = tag;
+        cache[index].first = true;
+        cache[index].second = tagTemp;
     }
     else
     {
