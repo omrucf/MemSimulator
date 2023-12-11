@@ -133,6 +133,11 @@ void cacheAccess(string address)
         binAddress = "0" + binAddress;
     }
 
+    if (binAddress.length() > 24)
+    {
+        binAddress = binAddress.substr(binAddress.length() - 24, binAddress.length()); // to get the last 24 bits
+    }
+
     cout << "Address in Hexadecimal: " << address << endl;
 
     displacement = log2(L);
