@@ -15,20 +15,19 @@ int L, S, C; // inputs: L,S; C = LS
 int tag, indexBits, displacement;
 int cacheClock;
 int hit, miss, totalAccesses;
-const int memoryAccessClocks = 120;
-vector<pair<bool, string>> cache;
+const int memoryAccessClocks = 120; 
+vector<pair<bool, string>> cache; // cache represented as a vector (bool for validity value)
 
 void readAccessSequence(string);
 void cacheAccess(string);
 string hexToBin(string);
 bool readFromFile(string);
-void initCache();
 
 int main()
 {
     system("clear");
-    bool CC = false;
-    cout << "Please enter the following inputs: " << endl;
+    bool CC = false; // bool to check if the cache clock is between 1 and 10
+    cout << "Please enter the following inputs: " << endl; // take required input from the user
     cout << "L: ";
     cin >> L;
     cout << "S: ";
@@ -39,7 +38,7 @@ int main()
     {
         CC = true;
     }
-    while (!CC)
+    while (!CC) // keep asking the user to enter a valid CC
     {
         cout << "Please enter a valid cache clock (between 1 and 10): ";
         cin >> cacheClock;
@@ -49,29 +48,13 @@ int main()
         }
     }
 
-    C = (double)S / (double)L;
+    C = (double)S / (double)L; // S = CL => C=S/L = Number of lines 
 
-    cache.resize(C);
+    cache.resize(C, make_pair(false, "")); // initialize the vector to the size of the lines and initialize the cache content
 
-    initCache();
+    string filename = "addresses.txt"; 
 
-    string filename = "addresses.txt";
-
-    readFromFile(filename);
-}
-
-int binaryStringToInt(string &binaryString)
-{
-    int result = 0;
-
-    for (int i = binaryString.size() - 1; i >= 0; --i)
-    {
-        int bit = binaryString[i] - '0';
-
-        result += bit * static_cast<int>(pow(2, binaryString.size() - 1 - i));
-    }
-
-    return result;
+    readFromFile(filename); // retrieve the addresses from a txt file 
 }
 
 string hexToBin(string hex)
@@ -101,13 +84,13 @@ bool readFromFile(string filename)
 
     // Vector to store bytes
     string line;
-    while (getline(inputFile, line, ','))
+    while (getline(inputFile, line, ',')) // data in txt file must be in csv format
     {
         cout << "\n\n\n\n\n\n";
         cout << "=================================================================" << endl;
         cout << "=============================New Access==========================" << endl;
         cout << "=================================================================" << endl;
-        cacheAccess(line);
+        cacheAccess(line); //every time we read an address we access the cache with this address
     }
 
     inputFile.close();
@@ -115,63 +98,55 @@ bool readFromFile(string filename)
     return true;
 }
 
-void initCache()
-{
-    for (int i = 0; i < S; i++)
-    {
-        cache.push_back(make_pair(false, ""));
-    }
-}
-
 // reasd byteVector one by one
 void cacheAccess(string address)
 {
-    string binAddress = hexToBin(address);
+    string binAddress = hexToBin(address); // first transform the address from hexadecimal to binary 
 
-    while (binAddress.length() < 24)
+    while (binAddress.length() < 24) // the size of the line of the address must be 24 bits so concatenate 0s if less
     {
         binAddress = "0" + binAddress;
     }
 
-    if (binAddress.length() > 24)
+    if (binAddress.length() > 24) // if the size of the address line is greater than 24 take the least significant 24 bits
     {
         binAddress = binAddress.substr(binAddress.length() - 24, binAddress.length()); // to get the last 24 bits
     }
 
     cout << "Address in Hexadecimal: " << address << endl;
 
-    displacement = log2(L);
+    displacement = log2(L); // equations from the slides 
     indexBits = log2(C);
 
     cout << "Address in Binary: " << binAddress << endl;
 
-    tag = 24 - indexBits - displacement;
+    tag = 24 - indexBits - displacement; // getting the size of the tags
 
-    string indexTemp, tagTemp, dTemp;
-    tagTemp = binAddress.substr(0, tag);
+    string indexTemp, tagTemp, dTemp; 
+    tagTemp = binAddress.substr(0, tag); // getting the binary values of tag, index, and displacement
     indexTemp = binAddress.substr(tag, indexBits);
     dTemp = binAddress.substr(tag + indexBits, displacement);
 
     cout << "Displacement binary: " << dTemp << endl;
     cout << "Index binary: " << indexTemp << endl;
 
-    int index = stoi(indexTemp, nullptr, 2);
+    int index = stoi(indexTemp, nullptr, 2); // getting the decimal value of the index
 
 
     // Check if tag is in cache
-    if (!cache[index].first | cache[index].second != tagTemp)
+    if (!cache[index].first || cache[index].second != tagTemp) // this is to check for a miss 
     {
-        miss++;
+        ++miss; // increment miss counter and then load the address in the cache 
         cache[index].first = true;
         cache[index].second = tagTemp;
     }
     else
     {
-        hit++;
+        ++hit; // if there is a hit no need to do anything, just increment the hit counter
     }
-    ++totalAccesses;
+    ++totalAccesses; // this where one access is done and the counter os accesses in incremented
 
-    cout << "------------------------------Cache------------------------------" << endl;
+    cout << "------------------------------Cache------------------------------" << endl; // keep track of the cache content and the results collected
     for (int i = 0; i < C; i++)
     {
         cout << i << " : valid = " << cache[i].first << " tag = " << cache[i].second << endl;
@@ -180,7 +155,7 @@ void cacheAccess(string address)
     cout << "Total Accesses: " << totalAccesses << endl;
     cout << "Hits: " << hit << endl;
     cout << "Misses: " << miss << endl;
-    cout << "Hit Ratio: " << (double)hit / (double)totalAccesses << endl;
+    cout << "Hit Ratio: " << (double)hit / (double)totalAccesses << endl; // equations from the slides
     cout << "Miss Ratio: " << (double)miss / (double)totalAccesses << endl;
 
     cout << "Average Access Time: " << (double)(cacheClock) + (memoryAccessClocks * (double)miss / (double)totalAccesses) << endl;
